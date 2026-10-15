@@ -1,0 +1,11 @@
+# OS / editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Logs
+*.log
+
+# Optional vendored PDF.js build (download it yourself, see README)
+assets/vendor/

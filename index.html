@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark light">
+  <title>Smart Study</title>
+  <meta name="description"
+    content="A local-first study workspace that turns your notes into summaries, flashcards, quizzes and exam questions using Ollama.">
+  <link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <link rel="stylesheet" href="css/responsive.css">
+  <script type="module" src="js/app.js"></script>
+</head>
+
+<body>
+  <a class="skip-link" href="#prompt">Skip to message box</a>
+
+  <div class="app" id="app" data-sidebar="open">
+    <div class="backdrop" id="backdrop" hidden></div>
+
+    <!-- ───────── Sidebar ───────── -->
+    <aside class="sidebar" id="sidebar" aria-label="Conversations and subjects">
+      <div class="sidebar-inner">
+        <div class="sidebar-head">
+          <div class="brand">
+            <span class="brand-mark" data-icon="logo" data-size="20" aria-hidden="true"></span>
+            <span class="brand-name">Smart Study</span>
+          </div>
+          <button class="icon-btn" id="btn-collapse" type="button" aria-label="Close sidebar" title="Close sidebar">
+            <span data-icon="sidebar"></span>
+          </button>
+        </div>
+
+        <div class="sidebar-actions">
+          <button class="btn btn-primary btn-block" id="btn-new-chat" type="button">
+            <span data-icon="plus" data-size="16"></span>New chat
+          </button>
+          <label class="search">
+            <span class="sr-only">Search conversations</span>
+            <span data-icon="search" data-size="16" aria-hidden="true"></span>
+            <input id="search-input" type="search" placeholder="Search chats" autocomplete="off" spellcheck="false">
+          </label>
+        </div>
+
+        <nav class="sidebar-scroll" id="sidebar-scroll" aria-label="Chat history">
+          <section class="side-section" aria-labelledby="subjects-title">
+            <div class="side-section-head">
+              <button class="side-section-toggle" id="subjects-toggle" type="button" aria-expanded="true"
+                aria-controls="subject-list">
+                <span data-icon="chevron-down" data-size="14" aria-hidden="true"></span>
+                <span id="subjects-title">Subjects</span>
+              </button>
+              <button class="icon-btn sm" id="btn-add-subject" type="button" aria-label="Add subject"
+                title="Add subject">
+                <span data-icon="plus" data-size="15"></span>
+              </button>
+            </div>
+            <ul class="subject-list" id="subject-list"></ul>
+          </section>
+          <div id="chat-list"></div>
+        </nav>
+
+        <div class="sidebar-foot">
+          <button class="sidebar-link" id="btn-settings" type="button">
+            <span data-icon="settings" data-size="18"></span>Settings
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ───────── Main workspace ───────── -->
+    <main class="main" id="main">
+      <header class="topbar">
+        <button class="icon-btn" id="btn-open-sidebar" type="button" aria-label="Open sidebar" title="Open sidebar">
+          <span data-icon="menu"></span>
+        </button>
+        <h1 class="topbar-title" id="topbar-title">Smart Study</h1>
+        <div class="topbar-actions">
+          <span class="status-pill" id="topbar-status" data-state="unknown" role="status">
+            <span class="dot" aria-hidden="true"></span><span class="status-text">Ollama not checked</span>
+          </span>
+          <button class="icon-btn" id="btn-theme" type="button" aria-label="Switch theme"></button>
+        </div>
+      </header>
+
+      <div class="scroller" id="scroller">
+        <section class="welcome" id="welcome" aria-labelledby="welcome-title">
+          <div class="deck" aria-hidden="true">
+            <div class="deck-card"><span class="deck-line w60"></span><span class="deck-line w80"></span><span
+                class="deck-line w40"></span></div>
+            <div class="deck-card"><span class="deck-line w80"></span><span class="deck-line w50"></span></div>
+            <div class="deck-card deck-front">
+              <span class="deck-tag">Q</span>
+              <span class="deck-line w80"></span><span class="deck-line w60"></span>
+              <span class="deck-answer"><b>A</b><i class="deck-line w50"></i></span>
+            </div>
+          </div>
+          <h2 id="welcome-title">What are we studying today?</h2>
+          <p class="welcome-lead">Attach your notes or paste some text, choose a study mode, and get summaries,
+            flashcards, quizzes and exam questions from a model running on your own computer.</p>
+
+          <div class="suggestions" id="suggestions">
+            <button class="suggestion" type="button" data-mode="summary" data-prompt="Summarize my notes.">
+              <span class="suggestion-icon" data-icon="book"></span>
+              <span class="suggestion-title">Summarize my notes</span>
+              <span class="suggestion-text">Main ideas, key points and definitions</span>
+            </button>
+            <button class="suggestion" type="button" data-mode="flashcards"
+              data-prompt="Create flashcards from my notes.">
+              <span class="suggestion-icon" data-icon="cards"></span>
+              <span class="suggestion-title">Create flashcards</span>
+              <span class="suggestion-text">Flip cards you can mark known or to revise</span>
+            </button>
+            <button class="suggestion" type="button" data-mode="quiz" data-prompt="Quiz me on my notes.">
+              <span class="suggestion-icon" data-icon="quiz"></span>
+              <span class="suggestion-title">Quiz me</span>
+              <span class="suggestion-text">Multiple choice with scores and explanations</span>
+            </button>
+            <button class="suggestion" type="button" data-mode="exam"
+              data-prompt="Prepare exam questions from my notes.">
+              <span class="suggestion-icon" data-icon="exam"></span>
+              <span class="suggestion-title">Prepare exam questions</span>
+              <span class="suggestion-text">Short and long answers plus a checklist</span>
+            </button>
+            <button class="suggestion" type="button" data-mode="explain"
+              data-prompt="Explain the hardest concepts in my notes in simple terms.">
+              <span class="suggestion-icon" data-icon="bulb"></span>
+              <span class="suggestion-title">Explain difficult concepts</span>
+              <span class="suggestion-text">Plain language, examples and analogies</span>
+            </button>
+            <button class="suggestion" type="button" data-mode="notes"
+              data-prompt="Turn my material into organized study notes.">
+              <span class="suggestion-icon" data-icon="notes"></span>
+              <span class="suggestion-title">Organize study notes</span>
+              <span class="suggestion-text">Chapters, headings, definitions, revision notes</span>
+            </button>
+          </div>
+          <p class="welcome-note">Chats stay in this browser and generation runs through your local Ollama. Scanned PDFs
+            need OCR, which isn't included yet.</p>
+        </section>
+
+        <div class="thread" id="thread" role="log" aria-label="Conversation" hidden></div>
+      </div>
+
+      <button class="jump" id="btn-jump" type="button" hidden>
+        <span data-icon="chevron-down" data-size="16"></span>Jump to latest
+      </button>
+
+      <footer class="composer-wrap">
+        <form class="composer" id="composer" autocomplete="off">
+          <div class="mode-row" id="mode-row" role="group" aria-label="Study mode"></div>
+
+          <div class="options-row" id="options-row" hidden>
+            <label class="field-inline"><span>Subject</span><select id="opt-subject"></select></label>
+            <label class="field-inline"><span>Difficulty</span><select id="opt-difficulty"></select></label>
+            <label class="field-inline"><span>Length</span><select id="opt-length"></select></label>
+          </div>
+
+          <div class="attachments" id="attachments" aria-label="Attached files" hidden></div>
+
+          <textarea id="prompt" rows="1" maxlength="20000" placeholder="Paste notes or ask a question…"
+            aria-label="Message" spellcheck="true"></textarea>
+
+          <div class="composer-bar">
+            <input type="file" id="file-input" multiple hidden
+              accept=".txt,.md,.pdf,.csv,.json,text/plain,text/markdown,text/csv,application/json,application/pdf">
+            <button type="button" class="icon-btn" id="btn-attach" aria-label="Attach files"
+              title="Attach files (.txt, .md, .pdf, .csv, .json)">
+              <span data-icon="paperclip"></span>
+            </button>
+            <button type="button" class="icon-btn" id="btn-options" aria-expanded="false" aria-controls="options-row"
+              title="Subject, difficulty and length" aria-label="Study options">
+              <span data-icon="sliders"></span>
+            </button>
+            <span class="status-pill status-quiet" id="composer-status" data-state="unknown">
+              <span class="dot" aria-hidden="true"></span><span class="status-text">Ollama not checked</span>
+            </span>
+            <button type="submit" class="send-btn" id="btn-send" aria-label="Send message" disabled></button>
+          </div>
+        </form>
+        <p class="composer-note">AI-generated study material can contain mistakes. Check it against your sources.</p>
+      </footer>
+    </main>
+
+    <div class="dropzone" id="dropzone" hidden aria-hidden="true">
+      <div class="dropzone-card">
+        <span data-icon="upload" data-size="28"></span>
+        <strong>Drop files to attach</strong>
+        <span>.txt, .md, .pdf, .csv or .json</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ───────── Settings ───────── -->
+  <dialog class="dialog dialog-lg" id="settings-dialog" aria-labelledby="settings-title">
+    <div class="dialog-shell">
+      <div class="dialog-head">
+        <h2 id="settings-title">Settings</h2>
+        <button class="icon-btn" id="settings-close" type="button" aria-label="Close settings"><span
+            data-icon="x"></span></button>
+      </div>
+      <div class="dialog-body settings">
+        <section class="set-section" aria-labelledby="set-h-appearance">
+          <h3 id="set-h-appearance">Appearance</h3>
+          <div class="seg" id="theme-seg" role="radiogroup" aria-label="Theme">
+            <button type="button" role="radio" data-theme-option="dark"><span data-icon="moon"
+                data-size="16"></span>Dark</button>
+            <button type="button" role="radio" data-theme-option="light"><span data-icon="sun"
+                data-size="16"></span>Light</button>
+            <button type="button" role="radio" data-theme-option="system"><span data-icon="sparkles"
+                data-size="16"></span>System</button>
+          </div>
+        </section>
+
+        <section class="set-section" aria-labelledby="set-h-ollama">
+          <div class="set-head">
+            <h3 id="set-h-ollama">Ollama connection</h3>
+            <span class="status-pill" id="settings-status" data-state="unknown" role="status"><span class="dot"
+                aria-hidden="true"></span><span class="status-text">Ollama not checked</span></span>
+          </div>
+          <label class="field"><span>API endpoint</span>
+            <input id="set-endpoint" type="url" inputmode="url" spellcheck="false"
+              placeholder="http://localhost:11434/api/chat">
+          </label>
+          <label class="field"><span>Model</span>
+            <input id="set-model" type="text" list="model-list" spellcheck="false" placeholder="qwen3:4b">
+            <datalist id="model-list"></datalist>
+          </label>
+          <div class="row">
+            <button class="btn" id="btn-test" type="button"><span data-icon="refresh" data-size="16"></span>Test
+              connection</button>
+          </div>
+          <div class="test-result" id="test-result" role="status" hidden></div>
+        </section>
+
+        <section class="set-section" aria-labelledby="set-h-gen">
+          <h3 id="set-h-gen">Generation</h3>
+          <label class="field"><span>Temperature <output id="set-temp-out">0.4</output></span>
+            <input id="set-temp" type="range" min="0" max="1.5" step="0.05">
+            <small>Lower values stay closer to your notes. Higher values vary more.</small>
+          </label>
+          <label class="field"><span>Context length (tokens)</span>
+            <select id="set-ctx"></select>
+            <small>Longer context fits larger notes but uses more memory and runs slower.</small>
+          </label>
+          <label class="field"><span>Timeout when the model goes quiet (seconds)</span>
+            <input id="set-timeout" type="number" min="15" max="900" step="5">
+          </label>
+          <label class="switch">
+            <input id="set-thinking" type="checkbox" role="switch">
+            <span class="switch-track" aria-hidden="true"></span>
+            <span class="switch-label">Let the model reason before answering <small>Slower. Only works with models that
+                support it.</small></span>
+          </label>
+        </section>
+
+        <section class="set-section" aria-labelledby="set-h-study">
+          <h3 id="set-h-study">Study defaults</h3>
+          <div class="grid-3">
+            <label class="field"><span>Mode</span><select id="set-mode"></select></label>
+            <label class="field"><span>Difficulty</span><select id="set-difficulty"></select></label>
+            <label class="field"><span>Length</span><select id="set-length"></select></label>
+          </div>
+        </section>
+
+        <section class="set-section" aria-labelledby="set-h-files">
+          <h3 id="set-h-files">File limits</h3>
+          <div class="grid-2">
+            <label class="field"><span>Max size per file (MB)</span><input id="set-maxmb" type="number" min="1" max="50"
+                step="1"></label>
+            <label class="field"><span>Max files per message</span><input id="set-maxfiles" type="number" min="1"
+                max="20" step="1"></label>
+          </div>
+        </section>
+
+        <section class="set-section" aria-labelledby="set-h-data">
+          <h3 id="set-h-data">Your data</h3>
+          <p class="muted" id="storage-usage">Calculating storage use…</p>
+          <div class="row wrap">
+            <button class="btn" id="btn-export" type="button"><span data-icon="download" data-size="16"></span>Export
+              chats</button>
+            <button class="btn" id="btn-import" type="button"><span data-icon="upload" data-size="16"></span>Import
+              chats</button>
+            <input id="import-input" type="file" accept="application/json,.json" hidden>
+            <button class="btn btn-danger" id="btn-clear-all" type="button"><span data-icon="trash"
+                data-size="16"></span>Clear all local data</button>
+          </div>
+        </section>
+
+        <section class="set-section" aria-labelledby="set-h-about">
+          <h3 id="set-h-about">About</h3>
+          <p class="muted">Smart Study <span id="about-version"></span>. Everything runs in your browser and your local
+            Ollama. Nothing is sent to a third-party service.</p>
+          <p class="muted">Chats are saved in this browser's localStorage. That storage is not encrypted, it belongs to
+            this browser profile only, and clearing site data removes it. Don't keep sensitive documents here.</p>
+        </section>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- ───────── Confirm / prompt / preview dialogs ───────── -->
+  <dialog class="dialog dialog-sm" id="confirm-dialog" aria-labelledby="confirm-title"
+    aria-describedby="confirm-message">
+    <div class="dialog-shell">
+      <div class="dialog-head">
+        <h2 id="confirm-title">Are you sure?</h2>
+      </div>
+      <div class="dialog-body">
+        <p id="confirm-message"></p>
+      </div>
+      <div class="dialog-foot">
+        <button class="btn" id="confirm-cancel" type="button">Cancel</button>
+        <button class="btn btn-primary" id="confirm-ok" type="button">Confirm</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog class="dialog dialog-sm" id="prompt-dialog" aria-labelledby="prompt-title">
+    <form class="dialog-shell" id="prompt-form" method="dialog">
+      <div class="dialog-head">
+        <h2 id="prompt-title">Name</h2>
+      </div>
+      <div class="dialog-body">
+        <label class="field"><span id="prompt-label">Name</span><input id="prompt-input" type="text" maxlength="60"
+            required autocomplete="off"></label>
+      </div>
+      <div class="dialog-foot">
+        <button class="btn" id="prompt-cancel" type="button">Cancel</button>
+        <button class="btn btn-primary" id="prompt-ok" type="submit">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog class="dialog dialog-lg" id="preview-dialog" aria-labelledby="preview-title">
+    <div class="dialog-shell">
+      <div class="dialog-head">
+        <h2 id="preview-title">Extracted text</h2>
+        <button class="icon-btn" id="preview-close" type="button" aria-label="Close preview"><span
+            data-icon="x"></span></button>
+      </div>
+      <div class="dialog-body">
+        <p class="muted" id="preview-meta"></p>
+        <p class="callout" id="preview-warning" hidden></p>
+        <pre class="preview-text" id="preview-text" tabindex="0"></pre>
+      </div>
+    </div>
+  </dialog>
+
+  <div class="toasts" id="toasts" aria-live="polite"></div>
+  <div id="menu-root"></div>
+</body>
+
+</html>
