@@ -13,6 +13,29 @@ export class OllamaError extends Error {
   }
 }
 
+/**new change */
+function localFetchOptions(url, options = {}) {
+  let hostname;
+
+  try {
+    hostname = new URL(url).hostname;
+  } catch {
+    return options;
+  }
+
+  const isLoopback = [
+    'localhost',
+    '127.0.0.1',
+    '[::1]',
+  ].includes(hostname);
+
+  return {
+    ...options,
+    ...(isLoopback ? { targetAddressSpace: 'loopback' } : {}),
+  };
+}
+/**new change */
+
 export function apiOrigin(endpoint) {
   let url;
   try { url = new URL(endpoint); } catch {
@@ -39,7 +62,10 @@ async function getJson(url, timeoutMs) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const res = await fetch(url, { signal: controller.signal });
+    const res = await fetch(
+      url,
+      localFetchOptions(url, { signal: controller.signal })
+    ); /**new change */
     if (!res.ok) throw new OllamaError('http', `Ollama answered with HTTP ${res.status}.`);
     return await res.json();
   } finally {
@@ -113,12 +139,21 @@ async function runStream({ endpoint, model, messages, options = {}, think, signa
     arm();
     let res;
     try {
-      res = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model, messages, stream: true, options, ...(think !== undefined ? { think } : {}) }),
-        signal: controller.signal,
-      });
+      res = await fetch(
+        endpoint,
+        localFetchOptions(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model,
+            messages,
+            stream: true,
+            options,
+            ...(think !== undefined ? { think } : {}),
+          }),
+          signal: controller.signal,
+        })
+      ); /**new change */
     } catch (err) {
       if (err.name === 'AbortError') throw abortError(signal, timedOut, timeoutMs);
       throw new OllamaError('unreachable', `Can't reach Ollama at ${apiOrigin(endpoint)}.`, originHint());
@@ -149,7 +184,7 @@ async function runStream({ endpoint, model, messages, options = {}, think, signa
     };
 
     try {
-      for (;;) {
+      for (; ;) {
         const { done, value } = await reader.read();
         if (done) break;
         arm();
